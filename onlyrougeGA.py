@@ -47,14 +47,14 @@ def clean_text(text):
 
 def evaluate_rouge(raw_sentences, abstract):
     rouge_scores = []
-    for sent in raw_sentences:
+    for index, sent in enumerate(raw_sentences):
         try:
             rouge = Rouge()
             scores = rouge.get_scores(sent, abstract, avg=True)
             rouge1f = scores["rouge-1"]["f"]
         except Exception:
             rouge1f = 0 
-        rouge_scores.append((sent, rouge1f))
+        rouge_scores.append((sent, rouge1f, index))
     return rouge_scores
   
 
@@ -90,19 +90,19 @@ def start_run(processID, POPU_SIZE, MAX_GEN, CROSS_RATE, MUTATE_RATE, sub_storie
             continue
 
         rougeforsentences = evaluate_rouge(raw_sentences,abstract)
-        rank_rouge = sorted(rougeforsentences, key=lambda x: x[1], reverse=True)
-
+        rank_rougeforsentences = sorted(rougeforsentences, key=lambda x: x[1], reverse=True)
         length_of_summary = int(0.2*len(raw_sentences))
-             
+        rank_rouge = rank_rougeforsentences[ : length_of_summary]
+        rank_rouge = sorted(rank_rouge, key=lambda x: x[2], reverse=False)
         print("Done preprocessing!")
         
         print('time for processing', time.time() - start_time)
 
-
+        
         file_name = os.path.join(save_path, example[1] )    
         f = open(file_name,'w', encoding='utf-8')
-        for i in range(length_of_summary):
-            f.write(rank_rouge[i][0] + ' ')
+        for sent in rank_rouge:
+            f.write(sent[0] + ' ')
         f.close()
 
     
